@@ -1,0 +1,89 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        table,table tr th, table tr td { border:1px solid #0094ff; }
+        table { width: 200px; min-height: 25px; line-height: 25px; text-align: center; border-collapse: collapse;}
+    </style>
+</head>
+<body>
+    <div align="center">
+    <div><input type="file" id="file"/></div>
+    <div id="exportBtn">
+    </div>
+    
+    <table class="table table-striped" id="rs-table">
+        <thead></thead>
+        <tbody id="salary-score-body"></tbody>
+    </table>
+    
+    </div>
+</body>
+
+
+<script type="text/javascript" src="../js/calculator.js"></script>
+<script type="text/javascript" src="../js/excelUtils.js"></script>
+<script type="text/javascript" src="../js/jquery-3.5.1.min.js"></script>
+<script type="text/javascript" src="../js/xlsx.core.min.js"></script>
+<script type="text/javascript">
+    var global_title = []
+    var global_datas = []
+    $('#file').on('change', function(){
+        var reader = new FileReader(); //新建获取file的读取文件
+        var fileInfo = this.files[0];
+        reader.onload = function(e) {
+            var data = e.target.result;
+            var workbook = XLSX.read(data, {type: 'binary'});
+            var sheetNames = workbook.SheetNames; // 工作表名称集合
+            var worksheet = workbook.Sheets[sheetNames[1]]; // 这里我们只读取第一张sheet
+            var json = XLSX.utils.sheet_to_json(worksheet);
+            parseData(json, gentblrow);
+        };
+        reader.readAsBinaryString(fileInfo);
+        console.log(fileInfo)
+    });
+
+    function gentblrow(datas){
+        var title = [
+            "姓名", "毛利完成率", "需求成交率", "新增精准企业数", "新增场推需求数", "新增KA联系人数", "当面拜访", "案例回收率", "Location意向客户数", "总分"
+        ];
+        global_title = title;
+        global_datas = datas;
+        var thead = document.querySelector("thead");
+        thead.appendChild(genThead());
+        var tbody = document.querySelector("tbody");
+        for(var i=0;i<datas.length;i++){
+            var tr=document.createElement("tr");
+            for(var k in datas[i]){
+                var td=document.createElement("td");
+                td.innerText=datas[i][k]; 
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+        }
+        document.getElementById("exportBtn").innerHTML = '<input type="button" onclick="exportClick()" value="导出表格"></input>';
+
+    }
+
+    function genThead() {
+        var title = [
+            "姓名", "毛利完成率", "需求成交率", "新增精准企业数", "新增场推需求数", "新增KA联系人数", "当面拜访", "案例回收率", "Location意向客户数", "总分"
+        ];
+
+        var tr = document.createElement("tr");
+        for(var i in title){
+            var td=document.createElement("td");
+            td.innerText=title[i]; 
+            tr.appendChild(td);
+        }
+        return tr;
+    }
+
+    function exportClick() {
+        exportExcel([global_title], global_datas);
+    }
+
+</script>
+</html>
