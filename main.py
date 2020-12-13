@@ -12,12 +12,13 @@ def process():
     datas = read_meta_data()
     items = data_transfer.convert(datas)
 
-    bd_list = [item for item in items if (item.employee_title == "商家拓展")]
+    bd_list = [item for item in items if (item.employee_title == "商家拓展" and item.employee_name == "陈凤强")]
 
     rs = []
     for item in bd_list:
         score = bd_calculator.calculate_for_bd(item)
         rs.append([item.employee_name, score])
+        print("%s: %s" % (item.employee_name, score))
     excel_utils.write("output.xlsx", rs)
 
 

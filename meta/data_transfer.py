@@ -1,4 +1,4 @@
-from meta import PerformanceItem
+from meta.performence_item import PerformanceItem
 
 
 def regular_num(num):
