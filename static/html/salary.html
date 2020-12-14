@@ -1,89 +1,144 @@
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <style>
-        table,table tr th, table tr td { border:1px solid #0094ff; }
-        table { width: 200px; min-height: 25px; line-height: 25px; text-align: center; border-collapse: collapse;}
+    <!-- <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css"> -->
+    <link rel="stylesheet" href="../css/element-ui.css">
+    <style type="text/css">
+        .el-table .success-row {
+            background: #f0f9eb;
+        }
     </style>
 </head>
+
 <body>
-    <div align="center">
-    <div><input type="file" id="file"/></div>
-    <div id="exportBtn">
-    </div>
-    
-    <table class="table table-striped" id="rs-table">
-        <thead></thead>
-        <tbody id="salary-score-body"></tbody>
-    </table>
-    
+    <div id="app">
+        <el-container>
+            <el-aside width=20%></el-aside>
+            <el-container>
+                <el-header height=100px></el-header>
+                <el-header height=50px>
+                    <div align="center"> <input type="file" ref="fileElm" @change="onFileChange()"></input></div>
+                    <div align="center">
+                        <input type="button" @click="onExport()" value="Export" :style=exportButtonStyle></input>
+                    </div>
+                    
+                </el-header>
+                <el-main max-height=700px>
+                    <el-table :data="tableData"
+                    max-height=700px
+                    border
+                    :span-method="mergeCell"
+                    :row-class-name="tableRowClassName">
+                        <el-table-column v-for="(item, index) in headData"  :prop='index + ""' :label='item' :max-width='tdWidth'></el-table-column>
+                        <!-- <el-table-column prop="0" label="姓名" :width=tdWidth
+                            sortable></el-table-column>
+                        <el-table-column prop="1" label="毛利完成率" :width=tdWidth 
+                            sortable></el-table-column>
+                        <el-table-column prop="2" label="需求成交率" :width=tdWidth 
+                            sortable></el-table-column>
+                        <el-table-column prop="3" label="新增精准企业数" :width=tdWidth 
+                            sortable></el-table-column>
+                        <el-table-column prop="4" label="新增场推需求数" :width=tdWidth
+                            sortable></el-table-column>
+                        <el-table-column prop="5" label="新增KA联系人数" :width=tdWidth
+                            sortable></el-table-column>
+                        <el-table-column prop="6" label="当面拜访" :width=tdWidth
+                            sortable></el-table-column>
+                        <el-table-column prop="7" label="案例回收率" :width=tdWidth
+                            sortable></el-table-column>
+                        <el-table-column prop="8" label="Location意向客户数" :width=tdWidth
+                            sortable></el-table-column>
+                        <el-table-column prop="9" label="总分" :width=tdWidth
+                            sortable></el-table-column> -->
+                    </el-table>
+                </el-main>
+            </el-container>
+            <el-aside width=20%></el-aside>
+        </el-container>
+        
+        
+
     </div>
 </body>
-
-
-<script type="text/javascript" src="../js/calculator.js"></script>
-<script type="text/javascript" src="../js/excelUtils.js"></script>
-<script type="text/javascript" src="../js/jquery-3.5.1.min.js"></script>
-<script type="text/javascript" src="../js/xlsx.core.min.js"></script>
-<script type="text/javascript">
-    var global_title = []
-    var global_datas = []
-    $('#file').on('change', function(){
-        var reader = new FileReader(); //新建获取file的读取文件
-        var fileInfo = this.files[0];
-        reader.onload = function(e) {
-            var data = e.target.result;
-            var workbook = XLSX.read(data, {type: 'binary'});
-            var sheetNames = workbook.SheetNames; // 工作表名称集合
-            var worksheet = workbook.Sheets[sheetNames[1]]; // 这里我们只读取第一张sheet
-            var json = XLSX.utils.sheet_to_json(worksheet);
-            parseData(json, gentblrow);
-        };
-        reader.readAsBinaryString(fileInfo);
-        console.log(fileInfo)
-    });
-
-    function gentblrow(datas){
-        var title = [
-            "姓名", "毛利完成率", "需求成交率", "新增精准企业数", "新增场推需求数", "新增KA联系人数", "当面拜访", "案例回收率", "Location意向客户数", "总分"
-        ];
-        global_title = title;
-        global_datas = datas;
-        var thead = document.querySelector("thead");
-        thead.appendChild(genThead());
-        var tbody = document.querySelector("tbody");
-        for(var i=0;i<datas.length;i++){
-            var tr=document.createElement("tr");
-            for(var k in datas[i]){
-                var td=document.createElement("td");
-                td.innerText=datas[i][k]; 
-                tr.appendChild(td);
+<script src="../js/vue.min.js"></script>
+<script src="../js/xlsx.core.min.js"></script>
+<script src="../js/calculator.js"></script>
+<!-- <script src="../js/excelUtils.js"></script> -->
+<script src="../js/element-ui.index.js"></script>
+<!-- <script src="https://unpkg.com/element-ui/lib/index.js"></script> -->
+<script>
+    new Vue({
+        el: '#app',
+        components: {
+        },
+        data: {
+            exportButtonStyle: "display: none",
+            tdWidth: 150,
+            headData: ["城市", "姓名", "职位", "毛利完成率", "需求成交率", "新增精准企业数", "新增场推需求数", "新增KA联系人数", "当面拜访", "案例回收率", "Location意向客户数", "总分"],
+            tableData: []
+        },
+        methods: {
+            onFileChange() {
+                var reader = new FileReader(); //新建获取file的读取文件
+                const fileInfo = event.target.files[0];
+                var that = this;
+                reader.onload = function (e) {
+                    var data = e.target.result;
+                    var workbook = XLSX.read(data, { type: 'binary' });
+                    var sheetNames = workbook.SheetNames; // 工作表名称集合
+                    var worksheet = workbook.Sheets[sheetNames[1]]; // 这里我们只读取第一张sheet
+                    // var objs = XLSX.utils.sheet_to_row_object_array(worksheet);
+                    var json = XLSX.utils.sheet_to_json(worksheet);
+                    that.tableData = parseData(json);
+                    that.exportButtonStyle = "";
+                };
+                reader.readAsBinaryString(fileInfo);
+            },
+            onExport() {
+                var aoa = [];
+                aoa = aoa.concat([this.headData]);
+                aoa = aoa.concat(mapToList(this.tableData));
+                var sheet = XLSX.utils.aoa_to_sheet(aoa);
+                openDownloadDialog(sheet2blob(sheet), 'export.xlsx');
+            },
+            mergeCell({ row, column, rowIndex, columnIndex }) {
+                if (columnIndex > 0) {
+                    // 只合并第一列
+                    return {
+                        rowspan: 1,
+                        colspan: 1
+                    };
+                }
+                if (rowIndex > 0 && row[0] == this.tableData[rowIndex - 1][0]) {
+                    // 已经合并过的单元格
+                    return {
+                        rowspan: 0,
+                        colspan: 0
+                    }
+                }
+                // 合并后续单元格
+                var count = 0;
+                for (var i = 0; i < this.tableData.length; i ++) {
+                    if (row[0] == this.tableData[i][0]) {
+                        count ++;
+                    }
+                }
+                return {
+                    rowspan: count,
+                    colspan: 1
+                };
+            },
+            tableRowClassName({row, rowIndex}) {
+                // if (row[11] >= 0.6) {
+                //     return "success-row"
+                // }
             }
-            tbody.appendChild(tr);
         }
-        document.getElementById("exportBtn").innerHTML = '<input type="button" onclick="exportClick()" value="导出表格"></input>';
-
-    }
-
-    function genThead() {
-        var title = [
-            "姓名", "毛利完成率", "需求成交率", "新增精准企业数", "新增场推需求数", "新增KA联系人数", "当面拜访", "案例回收率", "Location意向客户数", "总分"
-        ];
-
-        var tr = document.createElement("tr");
-        for(var i in title){
-            var td=document.createElement("td");
-            td.innerText=title[i]; 
-            tr.appendChild(td);
-        }
-        return tr;
-    }
-
-    function exportClick() {
-        exportExcel([global_title], global_datas);
-    }
-
+        
+    })
 </script>
 </html>
